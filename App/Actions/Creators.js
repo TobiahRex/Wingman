@@ -36,7 +36,17 @@ const logoutSuccess = () =>
 const logoutFailure = () =>
 ({ type: Types.LOGIN_FAILURE })
 
+const setActiveCategory = (category) =>
+({ type: Types.SET_ACTIVE_CATEGORY })
 
+const receivedAcapellaMessage = (data) =>
+({ type: Types.RECEIVED_MSG_AUDIO, data })
+
+const receivedAcapellaError = (error) =>
+({ type: Types.RECEIVED_MSG_ERROR, error })
+
+const getAudioMsg = (msg, msgVoice) =>
+({ type: Types.GET_MSG_AUDIO, msg, msgVoice })
 
 const startup = () => ({ type: Types.STARTUP })
 
