@@ -1,4 +1,6 @@
-import React, { PropTypes } from 'React'
+import React, { PropTypes } from 'react'
+import { connect } from 'react-redux'
+import { Actions as NavigationActions } from 'react-native-router-flux'
 import {
   Alert,
   Keyboard,
@@ -9,13 +11,14 @@ import {
   TouchableOpacity,
   View
 } from 'react-native'
-import { connect } from 'react-redux'
-import styles from './Styles/LoginScreenStyle'
 import Actions from '../Actions/Creators'
-import { Actions as NavigationActions } from 'react-native-router-flux'
+import I18n from '../I18n/I18n.js'
 import { Metrics } from '../Themes'
+import styles from './Styles/LoginScreenStyle'
 import { firebase, firebaseDB } from '../Config/FirebaseConfig'
+
 const firebaseAuth = firebase.auth()
+
 class RegisterScreen extends React.Component {
   constructor (props) {
     super(props)
@@ -100,6 +103,24 @@ class RegisterScreen extends React.Component {
               onSubmitEditing={() => this.refs.password.focus()}
               style={styles.textInput}
             />
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>
+              {I18n.t('password')}
+            </Text>
+            <TextInput
+              ref='password'
+              placeholder='Password'
+              onChangeText={this._setPassword}
+              value={password}
+              editable={editable}
+              keyboardType='default'
+              returnKeyType='next'
+              onSubmitEditing={() => this.refs.passwordConfirm.focus()}
+              secureTextEntry
+              style={styles.textInput}
+              />
           </View>
 
           <View style={styles.row}>
