@@ -21,7 +21,9 @@
   },
   "dependencies": {
     "apisauce": "^0.3.0",
+    "firebase": "^3.3.0",
     "format-json": "^1.0.3",
+    "geofire": "^4.1.1",
     "querystringify": "0.0.3",
     "ramda": "^0.22.1",
     "react": "^15.2.1",
@@ -79,10 +81,5 @@
       "XMLHttpRequest",
       "FormData"
     ]
-  },
-  "config": {
-    "ghooks": {
-      "pre-commit": "if [ -d 'ignite-base' ]; then cd ignite-base; fi; npm run lint"
-    }
   }
 }
