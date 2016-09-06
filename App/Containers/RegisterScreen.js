@@ -1,24 +1,23 @@
 import React, { PropTypes } from 'React'
 import {
-  View,
+  Alert,
+  Keyboard,
+  LayoutAnimation,
   ScrollView,
   Text,
   TextInput,
-  Keyboard,
-  LayoutAnimation,
   TouchableOpacity,
-  Alert,
+  View
 } from 'react-native'
 import { connect } from 'react-redux'
 import styles from './Styles/LoginScreenStyle'
 import Actions from '../Actions/Creators'
 import { Actions as NavigationActions } from 'react-native-router-flux'
 import { Metrics } from '../Themes'
-import I18n from'../I18n/I18n.js'
-import { firebaseDB } from '../Config/FirebaseConfig'
+import { firebase, firebaseDB } from '../Config/FirebaseConfig'
 const firebaseAuth = firebase.auth()
 class RegisterScreen extends React.Component {
-  constructor(props) {
+  constructor (props) {
     super(props)
     this.state = {
       username: 'Tobiah Rex',
@@ -161,7 +160,49 @@ class RegisterScreen extends React.Component {
       this.props.registerSuccess()
       newUser.updateProfile({ displayName: this.state.username })
     })
-    .then
+    .then(() => {
+      let user = firebaseAuth.currentUser
+      let location = JSON.parse(this.state.location || this.state.lastPosition)
+      firebaseDB.ref(`active/${user.uid}`).set({
+        location,
+        login: Date.now(),
+        user: user.uid
+      })
+      firebaseDB.ref(`settings/${user.uid}`).set({
+        searchDistance: 10,
+        distance: 'Mi.',
+        favorites: 'empty',
+        voice: 'empty'
+      })
+      firebaseDB.ref(`users/${user.uid}`).set({
+        username: this.state.username,
+        email: user.email,
+        id: user.uid,
+        photoUrl: this.state.photoUrl,
+        lastLogin: Date.now()
+      })
+    })
+    .then(() => {
+      let user = firebaseAuth.currentUser
+      firebaseDB.ref(`settings/${user.uid}`).once('value', (settingsSnap) => {
+        firebaseDB.ref(`users/${user.uid}`).once('value', (profileSnap) => {
+          firebaseDB.ref('active').once('value', (activeSnap) => {
+            user = profileSnap.val()
+            let settings = settingsSnap.val()
+            let users = activeSnap.val()
+            let location = JSON.parse(this.state.location || this.state.lastPosition)
+            this.props.receivedUser(user, settings, location)
+            this.props.receivedActiveUsers(users)
+            NavigationActions.settings()
+          })
+        })
+      })
+    })
+    .catch((err) => {
+      this.props.registerFailure()
+      console.error('firebase Error: ', err.message)
+      Alert.alert('Register Error', err.message)
+    })
   }
 }
 RegisterScreen.propTypes = {
@@ -173,3 +214,20 @@ RegisterScreen.propTypes = {
   receivedUser: PropTypes.func,
   receivedActiveUsers: PropTypes.func
 }
+const mapStateToProps = (state) => {
+  return {
+    attempting: state.auth.attempting,
+    location: state.user.location
+  }
+}
+const mapDispatchToProps = (dispatch) => {
+  return {
+    close: NavigationActions.pop,
+    registerAttempt: () => dispatch(Actions.registerAttempt()),
+    registerSuccess: (newUser) => dispatch(Actions.registerSuccess(newUser)),
+    registerFailure: () => dispatch(Actions.registerFailure()),
+    receivedUser: (user, settings, location) => dispatch(Actions.receivedUser(user, settings, location)),
+    receivedActiveUsers: (users) => dispatch(Actions.receivedActiveUsers(users))
+  }
+}
+export default connect(mapStateToProps, mapDispatchToProps)(RegisterScreen)
