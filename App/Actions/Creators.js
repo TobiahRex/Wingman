@@ -18,6 +18,26 @@ const registerSuccess = () =>
 const registerFailure = () =>
 ({ type: Types.REGISTER_FAILURE })
 
+const loginAttempt = () =>
+({ type: Types.LOGIN_ATTEMPT })
+
+const loginSuccess = () =>
+({ type: Types.LOGIN_SUCCESS })
+
+const loginFailure = (errorCode) =>
+({ type: Types.LOGIN_FAILURE, errorCode })
+
+const logoutAttempt = () =>
+({ type: Types.LOGIN_ATTEMPT })
+
+const logoutSuccess = () =>
+({ type: Types.LOGIN_SUCCESS })
+
+const logoutFailure = () =>
+({ type: Types.LOGIN_FAILURE })
+
+
+
 const startup = () => ({ type: Types.STARTUP })
 
 /**
@@ -37,6 +57,10 @@ export default {
   loginAttempt,
   loginFailure,
   loginSuccess,
+
+  logoutAttempt,
+  logoutSuccess,
+  logoutFailure,
 
   setActiveCategory,
 
