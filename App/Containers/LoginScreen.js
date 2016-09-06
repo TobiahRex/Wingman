@@ -3,7 +3,6 @@ import { connect } from 'react-redux'
 import { Actions as NavigationActions } from 'react-native-router-flux'
 import {
   Alert,
-  Image,
   Keyboard,
   LayoutAnimation,
   ScrollView,
@@ -14,7 +13,7 @@ import {
 } from 'react-native'
 import Actions from '../Actions/Creators'
 import Styles from './Styles/LoginScreenStyle'
-import { Images, Metrics } from '../Themes'
+import { Metrics } from '../Themes'
 import { firebase, firebaseDB } from '../Config/FirebaseConfig'
 import I18n from '../I18n/I18n.js'
 const firebaseAuth = firebase.auth()
@@ -145,7 +144,7 @@ class LoginScreen extends React.Component {
       let user = firebaseAuth.currentUser
       firebaseDB.ref(`settings/${user.uid}`).once('value', (settingsSnap) => {
         firebaseDB.ref(`users/${user.uid}`).once('value', (profileSnap) => {
-          firebaseDB.ref(`active`).once('value', (activeSnap) => {
+          firebaseDB.ref('active').once('value', (activeSnap) => {
             user = profileSnap.val()
             let settings = settingsSnap.val()
             let users = activeSnap.val()
@@ -156,6 +155,10 @@ class LoginScreen extends React.Component {
           })
         })
       })
+    })
+    .catch((err) => {
+      this.props.loginFailure()
+      Alert.alert('sign in Error: ', err.message)
     })
   }
 }
@@ -169,3 +172,20 @@ LoginScreen.propTypes = {
   receivedUser: PropTypes.func,
   receivedActiveUsers: PropTypes.func
 }
+const mapStateToProps = (state) => {
+  return {
+    attempting: state.auth.attempting,
+    location: state.user.location
+  }
+}
+const mapDispatchToProps = (dispatch) => {
+  return {
+    close: NavigationActions.pop,
+    loginAttempt: () => dispatch(Actions.loginAttempt()),
+    loginSuccess: () => dispatch(Actions.loginSuccess()),
+    loginFailure: () => dispatch(Actions.loginFailure()),
+    receivedUser: (user, settings, location) => dispatch(Actions.receivedUser(user, settings, location)),
+    receivedActiveUsers: (users) => dispatch(Actions.receivedActiveUsers(users))
+  }
+}
+export default connect(mapStateToProps, mapDispatchToProps)(LoginScreen)
