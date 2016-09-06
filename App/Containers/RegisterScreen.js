@@ -132,15 +132,36 @@ class RegisterScreen extends React.Component {
               </View>
             </TouchableOpacity>
             <Text>   </Text>
-            <TouchableOpacity>
-              
+            <TouchableOpacity
+              style={styles.loginButtonWrapper}
+              onPress={this.props.close}>
+              <View style={styles.loginButton}>
+                <Text style={styles.loginText}>
+                  Cancel
+                </Text>
+              </View>
             </TouchableOpacity>
-
           </View>
-
         </View>
       </ScrollView>
     )
+  }
+  _setUsername = (text) => this.setState({ username: text })
+  _setEmail = (text) => this.setState({ email: text })
+  _setPassword = (text) => this.setState({ password: text })
+  _confirmPassword = (text) => this.setState({ passwordVerify: text })
+  _handleRegister = () => {
+    const { email, password, passwordVerify } = this.state
+
+    if (password !== passwordVerify) Alert.alert('Password Error', 'Passwords do not match.')
+
+    this.props.registerAttempt()
+    firebaseAuth.createUserWithEmailAndPassword(email, password)
+    .then((newUser) => {
+      this.props.registerSuccess()
+      newUser.updateProfile({ displayName: this.state.username })
+    })
+    .then
   }
 }
 RegisterScreen.propTypes = {
