@@ -9,7 +9,8 @@ import {
   ScrollView,
   Text,
   TextInput,
-  TouchableOpacity
+  TouchableOpacity,
+  View
 } from 'react-native'
 import Actions from '../Actions/Creators'
 import Styles from './Styles/LoginScreenStyle'
@@ -71,8 +72,91 @@ class LoginScreen extends React.Component {
     const editable = !attempting
     const textInputStyle = editable ? Styles.textInput : Styles.textInputReadonly
     return (
-      
+      <ScrollView
+        contentContainerStyle={{justifyContent: 'center'}}
+        style={[Styles.container, {height: this.state.visibleHeight}]}>
+
+        <View style={Styles.form}>
+          <View style={Styles.row}>
+            <Text style={Styles.rowLabel}>{I18n.t('username')}</Text>
+            <TextInput
+              ref='username'
+              style={textInputStyle}
+              value={email}
+              editable={editable}
+              keyboardType='default'
+              returnKeyType='next'
+              onChangeText={this._handleChangeEmail}
+              onSubmitEditing={() => this.refs.password.focus()}
+              placeholder={I18n.t('username')} />
+          </View>
+
+          <View style={Styles.row}>
+            <Text style={Styles.rowLabel}>{I18n.t('password')}</Text>
+            <TextInput
+              ref='password'
+              style={textInputStyle}
+              value={password}
+              editable={editable}
+              keyboardType='default'
+              returnKeyType='go'
+              secureTextEntry
+              onChangeText={this._handleChangePassword}
+              placeholder={I18n.t('password')} />
+          </View>
+
+          <View style={[Styles.loginRow]}>
+            <TouchableOpacity
+              style={Styles.loginButtonWrapper} onPress={this._handlePressLogin}>
+              <View style={Styles.loginButton}>
+                <Text style={Styles.loginText}>{I18n.t('signIn')}</Text>
+              </View>
+            </TouchableOpacity>
+            <Text>   </Text>
+            <TouchableOpacity
+              style={Styles.loginButtonWrapper}
+              onPress={this.props.close}>
+              <View style={Styles.loginButton}>
+                <Text style={Styles.loginText}>{I18n.t('cancel')}</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
     )
+  }
+  _handleChangeEmail = (text) => this.setState({ email: text })
+  _handleChangePassword = (text) => this.setState({ password: text })
+  _handlePressLogin = () => {
+    const { email, password } = this.state
+    this.props.loginAttempt()
+
+    firebaseAuth.signInWithEmailAndPassword(email, password)
+    .then((user) => {
+      this.props.loginSuccess()
+      let location = JSON.parse(this.state.location || this.state.lastPosition)
+      firebaseDB.ref(`active/${user.uid}`).set({
+        location,
+        login: Date.now(),
+        user: user.uid
+      })
+    })
+    .then(() => {
+      let user = firebaseAuth.currentUser
+      firebaseDB.ref(`settings/${user.uid}`).once('value', (settingsSnap) => {
+        firebaseDB.ref(`users/${user.uid}`).once('value', (profileSnap) => {
+          firebaseDB.ref(`active`).once('value', (activeSnap) => {
+            user = profileSnap.val()
+            let settings = settingsSnap.val()
+            let users = activeSnap.val()
+            let location = JSON.parse(this.state.location || this.state.lastPosition)
+            this.props.receiveduser(user, settings, location)
+            this.props.receivedActiveUsers(users)
+            NavigationActions.categories()
+          })
+        })
+      })
+    })
   }
 }
 LoginScreen.propTypes = {
