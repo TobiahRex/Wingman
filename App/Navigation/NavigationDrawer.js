@@ -13,7 +13,6 @@ class NavigationDrawer extends Component {
   static propTypes = {
     navigationState: PropTypes.object
   }
-
   render () {
     const state = this.props.navigationState
     const children = state.children
@@ -33,21 +32,16 @@ class NavigationDrawer extends Component {
         tweenHandler={(ratio) => ({
           main: { opacity: Math.max(0.54, 1 - ratio) }
         })}
-      >
+        >
         <DefaultRenderer navigationState={children[0]} onNavigate={this.props.onNavigate} />
       </Drawer>
     )
   }
 }
-
 const mapStateToProps = (state) => {
-  return {
-  }
+  return {}
 }
-
 const mapDispatchToProps = (dispatch) => {
-  return {
-  }
+  return {}
 }
-
 export default connect(mapStateToProps, mapDispatchToProps)(NavigationDrawer)

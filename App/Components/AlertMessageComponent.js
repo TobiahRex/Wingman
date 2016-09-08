@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { PropTypes } from 'react'
 import { View, Text } from 'react-native'
 import styles from './Styles/AlertMessageComponentStyle'
 import * as Animatable from 'react-native-animatable'
@@ -23,10 +23,10 @@ ExamplesRegistry.add('Alert Message', () =>
 export default class AlertMessage extends React.Component {
 
   static propTypes = {
-    style: React.PropTypes.object,
-    title: React.PropTypes.string.isRequired,
-    icon: React.PropTypes.string,
-    show: React.PropTypes.bool
+    style: PropTypes.object,
+    title: PropTypes.string.isRequired,
+    icon: PropTypes.string,
+    show: PropTypes.bool
   }
 
   static defaultProps = {

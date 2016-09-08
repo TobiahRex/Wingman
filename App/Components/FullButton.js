@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { PropTypes } from 'react'
 import { TouchableOpacity, Text } from 'react-native'
 import styles from './Styles/FullButtonStyle'
 import ExamplesRegistry from '../Services/ExamplesRegistry'
@@ -14,9 +14,9 @@ ExamplesRegistry.add('Full Button', () =>
 export default class FullButton extends React.Component {
 
   static propTypes = {
-    text: React.PropTypes.string.isRequired,
-    onPress: React.PropTypes.func.isRequired,
-    styles: React.PropTypes.object
+    text: PropTypes.string.isRequired,
+    onPress: PropTypes.func.isRequired,
+    styles: PropTypes.object
   }
 
   render () {

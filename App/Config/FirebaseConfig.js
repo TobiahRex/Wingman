@@ -59,3 +59,7 @@ function setActiveUserListener () {
     dispatch({ type: Types.ACTIVE_USERS_RECIEVED, users })
   })
 }
+export {
+  firebase,
+  firebaseDB
+}
