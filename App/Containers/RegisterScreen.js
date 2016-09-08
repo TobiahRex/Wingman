@@ -1,27 +1,34 @@
-import React, { PropTypes } from 'react'
-import { connect } from 'react-redux'
-import { Actions as NavigationActions } from 'react-native-router-flux'
+import React, { PropTypes } from 'React'
 import {
-  Alert,
-  Keyboard,
-  LayoutAnimation,
+  View,
   ScrollView,
   Text,
   TextInput,
+  Keyboard,
+  LayoutAnimation,
   TouchableOpacity,
-  View
+  Alert,
 } from 'react-native'
-import Actions from '../Actions/Creators'
-import I18n from '../I18n/I18n.js'
-import { Metrics } from '../Themes'
+import { connect } from 'react-redux'
 import styles from './Styles/LoginScreenStyle'
+import Actions from '../Actions/Creators'
+import { Actions as NavigationActions } from 'react-native-router-flux'
+import { Metrics } from '../Themes'
+import I18n from '../I18n/I18n.js'
 import { firebase, firebaseDB } from '../Config/FirebaseConfig'
-
 const firebaseAuth = firebase.auth()
-
 class RegisterScreen extends React.Component {
-  constructor (props) {
-    super(props)
+  static propTypes = {
+    loginScreen: PropTypes.func,
+    attempting: PropTypes.bool,
+    registerAttempt: PropTypes.func,
+    registerSuccess: PropTypes.func,
+    registerFailure: PropTypes.func,
+    receivedUser: PropTypes.func,
+    receivedActiveUsers: PropTypes.func
+  }
+  constructor(props, context) {
+    super(props, context);
     this.state = {
       username: 'Tobiah Rex',
       email: 'bob@bob.com',
@@ -30,7 +37,7 @@ class RegisterScreen extends React.Component {
       passwordVerify: 'tobiah',
       visibleHeight: Metrics.screenHeight,
       location: this.props.location,
-      lasPosition: null
+      lastPosition: null
     }
     this.watchID = null
   }
@@ -38,11 +45,12 @@ class RegisterScreen extends React.Component {
     navigator.geolocation.getCurrentPosition((position) => {
       let location = JSON.stringify(position)
       this.setState({ location })
-    }, (err) => console.info('Could not Fetch location: ', err))
+    }, (err) => console.info('Could not Fetch Location: ', err))
     this.watchID = navigator.geolocation.watchPosition((position) => {
       let lastPosition = JSON.stringify(position)
       this.setState({ lastPosition })
     })
+
     this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this.keyboardDidShow)
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this.keyboardDidHide)
   }
@@ -59,39 +67,43 @@ class RegisterScreen extends React.Component {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     this.setState({ visibleHeight: Metrics.screenHeight })
   }
-  render () {
-    console.info('location: \n', JSON.parse(this.state.location), '\nlastPosition: \n', JSON.parse(this.state.lastPosition))
+  render() {
+    console.info('location: \n', JSON.parse(this.state.location))
+    console.info('lastPosition: \n', JSON.parse(this.state.lastPosition))
     const { email, password, passwordVerify, username } = this.state
     const { attempting } = this.props
     const editable = !attempting
     return (
-      <ScrollView
-        contentContainerStyle={{justifyContent: 'center'}}
-        style={[styles.container, {height: this.state.visibleHeight}]}>
-        <Text>Register</Text>
-        <View style={styles.form}>
+      <ScrollView contentContainerStyle={{justifyContent: 'center'}} style={[styles.container, {height: this.state.visibleHeight}]}>
 
+        <Text>Register</Text>
+
+        <View style={styles.form}>
           <View style={styles.row}>
+
             <Text style={styles.rowLabel}>
               Username
             </Text>
+
             <TextInput
               ref='username'
-              placeholder='Han Solo'
+              placeholder='BobbaFett'
               onChangeText={this._setUsername}
               value={username}
               editable={editable}
               keyboardType='default'
               returnKeyType='next'
-              onSubmitEditing={() => this.refs.email.focuse()}
+              onSubmitEditing={() => this.refs.email.focus()}
               style={styles.textInput}
               />
           </View>
 
           <View style={styles.row}>
+
             <Text style={styles.rowLabel}>
               Email
             </Text>
+
             <TextInput
               ref='email'
               placeholder='trex@tobiahrex.com'
@@ -100,9 +112,10 @@ class RegisterScreen extends React.Component {
               editable={editable}
               keyboardType='default'
               returnKeyType='next'
+
               onSubmitEditing={() => this.refs.password.focus()}
               style={styles.textInput}
-            />
+              />
           </View>
 
           <View style={styles.row}>
@@ -143,15 +156,18 @@ class RegisterScreen extends React.Component {
           </View>
 
           <View style={styles.loginRow}>
+
             <TouchableOpacity style={styles.loginButtonWrapper}
-              onPress={this._handleRegister}>
+              onPress={this._handleRegister} >
               <View style={styles.loginButton}>
                 <Text style={styles.loginText}>
                   Register
                 </Text>
               </View>
             </TouchableOpacity>
+
             <Text>   </Text>
+
             <TouchableOpacity
               style={styles.loginButtonWrapper}
               onPress={this.props.close}>
@@ -173,67 +189,60 @@ class RegisterScreen extends React.Component {
   _handleRegister = () => {
     const { email, password, passwordVerify } = this.state
 
-    if (password !== passwordVerify) Alert.alert('Password Error', 'Passwords do not match.')
-
-    this.props.registerAttempt()
-    firebaseAuth.createUserWithEmailAndPassword(email, password)
-    .then((newUser) => {
-      this.props.registerSuccess()
-      newUser.updateProfile({ displayName: this.state.username })
-    })
-    .then(() => {
-      let user = firebaseAuth.currentUser
-      let location = JSON.parse(this.state.location || this.state.lastPosition)
-      firebaseDB.ref(`active/${user.uid}`).set({
-        location,
-        login: Date.now(),
-        user: user.uid
+    if (password === passwordVerify) {
+      this.props.registerAttempt()
+      firebaseAuth.createUserWithEmailAndPassword(email, password)
+      .then((newUser) => {
+        this.props.registerSuccess()
+        newUser.updateProfile({ displayName: this.state.username })
       })
-      firebaseDB.ref(`settings/${user.uid}`).set({
-        searchDistance: 10,
-        distance: 'Mi.',
-        favorites: 'empty',
-        voice: 'empty'
+      .then(() => {
+        let user = firebaseAuth.currentUser
+        let location = JSON.parse(this.state.location || this.state.lastPosition)
+        firebaseDB.ref(`active/${user.uid}`).set({
+          location,
+          login: Date.now(),
+          user: user.uid
+        })
+        firebaseDB.ref(`settings/${user.uid}`).set({
+          searchDistance: 10,
+          distance: 'Mi.',
+          favorites: 'empty',
+          voice: 'empty',
+        })
+        firebaseDB.ref(`users/${user.uid}`).set({
+          username: this.state.username,
+          email: user.email,
+          id: user.uid,
+          photoUrl: this.state.photoUrl,
+          lastLogin: Date.now()
+        })
       })
-      firebaseDB.ref(`users/${user.uid}`).set({
-        username: this.state.username,
-        email: user.email,
-        id: user.uid,
-        photoUrl: this.state.photoUrl,
-        lastLogin: Date.now()
-      })
-    })
-    .then(() => {
-      let user = firebaseAuth.currentUser
-      firebaseDB.ref(`settings/${user.uid}`).once('value', (settingsSnap) => {
-        firebaseDB.ref(`users/${user.uid}`).once('value', (profileSnap) => {
-          firebaseDB.ref('active').once('value', (activeSnap) => {
-            user = profileSnap.val()
-            let settings = settingsSnap.val()
-            let users = activeSnap.val()
-            let location = JSON.parse(this.state.location || this.state.lastPosition)
-            this.props.receivedUser(user, settings, location)
-            this.props.receivedActiveUsers(users)
-            NavigationActions.settings()
+      .then(() => {
+        let user = firebaseAuth.currentUser
+        firebaseDB.ref(`settings/${user.uid}`).once('value', (settingsSnap) => {
+          firebaseDB.ref(`users/${user.uid}`).once('value', (profileSnap) => {
+            firebaseDB.ref('active').once('value', (activeSnap) => {
+              user = profileSnap.val()
+              let settings = settingsSnap.val()
+              let users = activeSnap.val()
+              let location = JSON.parse(this.state.location || this.state.lastPosition)
+              this.props.receivedUser(user, settings, location)
+              this.props.receivedActiveUsers(users)
+              NavigationActions.settings()
+            })
           })
         })
       })
-    })
-    .catch((err) => {
-      this.props.registerFailure()
-      console.error('firebase Error: ', err.message)
-      Alert.alert('Register Error', err.message)
-    })
+      .catch((err) => {
+        this.props.registerFailure()
+        console.error('firebase Error: ', err.message);
+        Alert.alert(`Register Error`, err.message)
+      })
+    } else {
+      Alert.alert('Password Error', 'Passwords do not match.');
+    }
   }
-}
-RegisterScreen.propTypes = {
-  loginScreen: PropTypes.func,
-  attempting: PropTypes.bool,
-  registerAttempt: PropTypes.func,
-  registerSuccess: PropTypes.func,
-  registerFailure: PropTypes.func,
-  receivedUser: PropTypes.func,
-  receivedActiveUsers: PropTypes.func
 }
 const mapStateToProps = (state) => {
   return {

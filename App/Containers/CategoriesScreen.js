@@ -73,13 +73,6 @@ class CategoriesScreen extends React.Component {
       results: [],
       partialResults: [],
     }
-    Voice.onSpeechStart = this.onSpeechStart
-    Voice.onSpeechRecognized = this.onSpeechRecognized
-    Voice.onSpeechEnd = this.onSpeechEnd
-    Voice.onSpeechError = this.onSpeechError
-    Voice.onSpeechResults = this.onSpeechResults
-    Voice.onSpeechPartialResults = this.onSpeechPartialResults
-    Voice.onSpeechVolumeChanged = this.onSpeechVolumeChanged
   }
   _renderRow (rowData) {
     return (
@@ -168,76 +161,6 @@ class CategoriesScreen extends React.Component {
         }
       }
     }, 5000)
-  }
-
-  onSpeechStart = (e) => {
-    this.setState({
-      started: true,
-    })
-  }
-  onSpeechRecognized = (e) => {
-    this.setState({
-      recognized: true,
-    })
-  }
-  onSpeechEnd = (e) => {
-    this.setState({
-      end: true,
-    })
-  }
-  onSpeechError = (e) => {
-    this.setState({
-      error: e.error,
-    })
-    Alert.alert('Error: ', 'Sorry, I could not recognize that option')
-  }
-  onSpeechResults = (e) => {
-    this.setState({
-      results: e.value,
-    })
-  }
-  onSpeechPartialResults = (e) => {
-    this.setState({
-      partialResults: e.value,
-    })
-  }
-  onSpeechVolumeChanged = (e) => {
-    this.setState({
-      pitch: e.value,
-    })
-  }
-  _startRecognizing = (e) => {
-    this._beginEvaluation()
-    this.setState({
-      recognized: false,
-      pitch: '',
-      error: '',
-      started: false,
-      results: [],
-      partialResults: [],
-    })
-  const error = Voice.start('en')
-    if (error) {
-      ToastAndroid.show(error, ToastAndroid.SHORT)
-    }
-  }
-  _stopRecognizing = (e) => {
-    const error = Voice.stop()
-    if (error) {
-      ToastAndroid.show(error, ToastAndroid.SHORT)
-    }
-  }
-  _cancelRecognizing = (e) => {
-    const error = Voice.cancel()
-    if (error) {
-      ToastAndroid.show(error, ToastAndroid.SHORT)
-    }
-  }
-  _destroyRecognizer = (e) => {
-    const error = Voice.destroy()
-    if (error) {
-      ToastAndroid.show(error, ToastAndroid.SHORT)
-    }
   }
 }
 CategoriesScreen.propTypes = {

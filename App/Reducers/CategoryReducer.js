@@ -3,12 +3,12 @@ import Immutable from 'seamless-immutable'
 import { createReducer } from 'reduxsauce'
 
 export const INITIAL_STATE = Immutable({
-  category: null,
-  category_messages: null,
-  category_users: null,
-  user_message: null,
-  user_message_audio: null,
-  error: null
+  category: 'empty',
+  category_messages: 'empty',
+  category_users: 'empty',
+  user_message: 'empty',
+  user_message_audio: 'empty',
+  error: 'empty'
 })
 
 const receivedMessages = (state, action) =>

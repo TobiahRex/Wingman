@@ -1,23 +1,34 @@
-import React, { PropTypes } from 'react'
-import { connect } from 'react-redux'
-import { Actions as NavigationActions } from 'react-native-router-flux'
+import React, {PropTypes} from 'react'
 import {
-  Alert,
-  Keyboard,
-  LayoutAnimation,
+  View,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  Image,
+  Keyboard,
+  LayoutAnimation,
+  Alert
 } from 'react-native'
-import Actions from '../Actions/Creators'
+import { connect } from 'react-redux'
 import Styles from './Styles/LoginScreenStyle'
-import { Metrics } from '../Themes'
+import Actions from '../Actions/Creators'
+import {Images, Metrics} from '../Themes'
+import { Actions as NavigationActions } from 'react-native-router-flux'
 import { firebase, firebaseDB } from '../Config/FirebaseConfig'
 import I18n from '../I18n/I18n.js'
 const firebaseAuth = firebase.auth()
 class LoginScreen extends React.Component {
+  static propTypes = {
+    dispatch: PropTypes.func,
+    attempting: PropTypes.bool,
+    close: PropTypes.func,
+    loginAttempt: PropTypes.func,
+    loginSuccess: PropTypes.func,
+    loginFailure: PropTypes.func,
+    receivedUser: PropTypes.func,
+    receivedActiveUsers: PropTypes.func
+  }
   constructor (props) {
     super(props)
     this.state = {
@@ -26,7 +37,7 @@ class LoginScreen extends React.Component {
       visibleHeight: Metrics.screenHeight,
       topLogo: { width: Metrics.screenWidth },
       location: this.props.location,
-      lasPosition: null
+      lastPosition: null
     }
     this.watchID = null
   }
@@ -36,11 +47,13 @@ class LoginScreen extends React.Component {
       console.info('location: ', location)
       this.setState({ location })
     }, (err) => console.info('Could not Fetch location: ', err))
-    this.watchID = navigator.geolocation.getCurrentPosition((position) => {
+    this.watchID = navigator.geolocation.watchPosition((position) => {
       let lastPosition = JSON.stringify(position)
       this.setState({ lastPosition })
     })
-    this.keyboardDidShow = Keyboard.addListener('keyboardDidShow', this.keyboardDidShow)
+    // Using keyboardWillShow/Hide looks 1,000 times better, but doesn't work on Android
+    // TODO: Revisit this if Android begins to support - https://github.com/facebook/react-native/issues/3468
+    this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this.keyboardDidShow)
     this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this.keyboardDidHide)
   }
   componentWillUnmount () {
@@ -49,6 +62,7 @@ class LoginScreen extends React.Component {
     navigator.geolocation.clearWatch(this.watchID)
   }
   keyboardDidShow = (e) => {
+    // Animation types easeInEaseOut/linear/spring
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     let newSize = Metrics.screenHeight - e.endCoordinates.height
     this.setState({
@@ -56,24 +70,24 @@ class LoginScreen extends React.Component {
       topLogo: { width: 100, height: 70 }
     })
   }
-  keyboardDidhide = (e) => {
+  keyboardDidHide = (e) => {
+    // Animation types easeInEaseOut/linear/spring
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     this.setState({
       visibleHeight: Metrics.screenHeight,
-      topLogo: { width: Metrics.screenWidth }
+      topLogo: {width: Metrics.screenWidth}
     })
   }
   render () {
     console.info('location: \n', JSON.parse(this.state.location))
-    console.info('lastPosition: \n', JSON.parse(this.state.lastPosition))
-    const { email, password } = this.this.state
+    console.info('lasstposition: \n', JSON.parse(this.state.lastPosition))
+    const { email, password } = this.state
     const { attempting } = this.props
     const editable = !attempting
     const textInputStyle = editable ? Styles.textInput : Styles.textInputReadonly
     return (
       <ScrollView
-        contentContainerStyle={{justifyContent: 'center'}}
-        style={[Styles.container, {height: this.state.visibleHeight}]}>
+        contentContainerStyle={{justifyContent: 'center'}} style={[Styles.container, {height: this.state.visibleHeight}]}>
 
         <View style={Styles.form}>
           <View style={Styles.row}>
@@ -86,6 +100,7 @@ class LoginScreen extends React.Component {
               keyboardType='default'
               returnKeyType='next'
               onChangeText={this._handleChangeEmail}
+              underlineColorAndroid='transparent'
               onSubmitEditing={() => this.refs.password.focus()}
               placeholder={I18n.t('username')} />
           </View>
@@ -101,31 +116,36 @@ class LoginScreen extends React.Component {
               returnKeyType='go'
               secureTextEntry
               onChangeText={this._handleChangePassword}
+              underlineColorAndroid='transparent'
               placeholder={I18n.t('password')} />
           </View>
 
           <View style={[Styles.loginRow]}>
-            <TouchableOpacity
-              style={Styles.loginButtonWrapper} onPress={this._handlePressLogin}>
+
+            <TouchableOpacity style={Styles.loginButtonWrapper} onPress={this._handlePressLogin}>
               <View style={Styles.loginButton}>
                 <Text style={Styles.loginText}>{I18n.t('signIn')}</Text>
               </View>
             </TouchableOpacity>
             <Text>   </Text>
-            <TouchableOpacity
-              style={Styles.loginButtonWrapper}
-              onPress={this.props.close}>
+            <TouchableOpacity style={Styles.loginButtonWrapper} onPress={this.props.close}>
               <View style={Styles.loginButton}>
                 <Text style={Styles.loginText}>{I18n.t('cancel')}</Text>
               </View>
             </TouchableOpacity>
+
           </View>
         </View>
+
       </ScrollView>
     )
   }
-  _handleChangeEmail = (text) => this.setState({ email: text })
-  _handleChangePassword = (text) => this.setState({ password: text })
+  _handleChangeEmail = (text) => {
+    this.setState({ email: text })
+  }
+  _handleChangePassword = (text) => {
+    this.setState({ password: text })
+  }
   _handlePressLogin = () => {
     const { email, password } = this.state
     this.props.loginAttempt()
@@ -137,7 +157,7 @@ class LoginScreen extends React.Component {
       firebaseDB.ref(`active/${user.uid}`).set({
         location,
         login: Date.now(),
-        user: user.uid
+        user: user.uid,
       })
     })
     .then(() => {
@@ -149,7 +169,7 @@ class LoginScreen extends React.Component {
             let settings = settingsSnap.val()
             let users = activeSnap.val()
             let location = JSON.parse(this.state.location || this.state.lastPosition)
-            this.props.receiveduser(user, settings, location)
+            this.props.receivedUser(user, settings, location)
             this.props.receivedActiveUsers(users)
             NavigationActions.categories()
           })
@@ -158,24 +178,14 @@ class LoginScreen extends React.Component {
     })
     .catch((err) => {
       this.props.loginFailure()
-      Alert.alert('sign in Error: ', err.message)
+      Alert.alert('Sign In Error', err.message)
     })
   }
-}
-LoginScreen.propTypes = {
-  dispatch: PropTypes.func,
-  attempting: PropTypes.bool,
-  close: PropTypes.func,
-  loginAttempt: PropTypes.func,
-  loginSuccess: PropTypes.func,
-  loginFailure: PropTypes.func,
-  receivedUser: PropTypes.func,
-  receivedActiveUsers: PropTypes.func
 }
 const mapStateToProps = (state) => {
   return {
     attempting: state.auth.attempting,
-    location: state.user.location
+    location: state.user.location,
   }
 }
 const mapDispatchToProps = (dispatch) => {
