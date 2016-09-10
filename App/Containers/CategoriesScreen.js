@@ -5,10 +5,14 @@ import {
   Alert,
   Image,
   ListView,
+  NativeModules,
+  ScrollView,
+  StyleSheet,
   Text,
   ToastAndroid,
   TouchableOpacity,
-  View
+  TouchableHighlight,
+  View,
 } from 'react-native'
 import { Images } from '../Themes'
 import { Actions as NavigationActions } from 'react-native-router-flux'
@@ -18,6 +22,8 @@ import { firebase, firebaseDB } from '../Config/FirebaseConfig'
 // For empty lists
 import AlertMessage from '../Components/AlertMessageComponent'
 
+console.log('NativeModules: ', NativeModules);
+import { AudioRecorder, AudioUtils } from 'react-native-audio'
 const firebaseAuth = firebase.auth()
 
 class CategoriesScreen extends React.Component {
@@ -65,44 +71,118 @@ class CategoriesScreen extends React.Component {
 
     this.state = {
       dataSource: ds.cloneWithRows(dataSource),
-      recognized: false,
-      pitch: '',
-      error: '',
-      end: false,
-      started: false,
-      results: [],
-      partialResults: [],
+      currentTime: 0.0,
+      recording: false,
+      stoppedRecording: false,
+      stoppedPlaying: false,
+      playing: false,
+      finished: false
     }
+  }
+  prepareRecordingPath (audioPath) {
+    AudioRecorder.prepareRecordingAtPath(audioPath, {
+      SampleRate: 22050,
+      Channels: 1,
+      AudioQuality: 'Low',
+      AudioEncoding: 'AAC'
+    })
+  }
+  componentDidMount () {
+    let audioPath = AudioUtils.DocumentDirectoryPath + '/test.aac'
+    this.prepareRecordingPath(audioPath);
+    AudioRecorder.onProgress = (data) => {
+      this.setState({ currentTime: Math.floor(data.currentTime) })
+    }
+    AudioRecorder.onFinish = (data) => {
+      this.setState({ finished: data.finished })
+      console.log('Finished Recording: ', data.finished);
+    }
+  }
+  _renderButton (title, onPress, active) {
+    let style = (active) ? styles.activeButtonText : styles.buttonText
+    return (
+      <TouchableOpacity style={styles.button} onPress={onPress}>
+        <Text style={style}>
+          {title}
+        </Text>
+      </TouchableOpacity>
+    )
+  }
+  _pause () {
+    if (this.state.recording) {
+      AudioREcorder.pauseRecording()
+      this.setState({ stoppedRecording: true, recording: false })
+    }
+    else if (this.state.playing) {
+      AudioRecorder.pausePlaying()
+      this.setState({ playing: false, stoppedPlaying: true })
+    }
+  }
+  _stop () {
+    if (this.state.recording) {
+      AudioRecorder.stopRecording()
+      this.setState({ stoppedRecording: true, recording: false })
+    } else if (this.state.playing) {
+      AudioRecorder.stopPlaying()
+      this.setState({ playing: false, stoppedPlaying: true })
+    }
+  }
+  _record () {
+    if (this.state.stoppedRecording) {
+      let audioPath = AudioUtils.DocumentDirectoryPath + '/test.aac'
+      this.prepareRecordingPath(audioPath)
+    }
+    AudioRecorder.startRecording()
+    this.setState({ recording: true, playing: false })
+  }
+  _play () {
+    if (this.state.recording) {
+      this._stop()
+      this.setState({ recording: false })
+    }
+    AudioRecorder.playRecording()
+    this.setState({ playing: true })
+  }
+  // <ListView
+  //   contentContainerStyle={styles.listContent}
+  //   dataSource={this.state.dataSource}
+  //   renderRow={this._renderRow} />
+  //
+  // <View style={styles.container}>
+  //   <TouchableOpacity onPress={this._startRecognizing}>
+  //     <Image
+  //       style={styles.button}
+  //       source={Images.button}
+  //       />
+  //   </TouchableOpacity>
+  // </View>
+  render () {
+    return (
+      <ScrollView >
+
+
+
+        <View style={exampleStyles.container}>
+          <View style={exampleStyles.controls}>
+            {this._renderButton("RECORD", () => {this._record()}, this.state.recording )}
+            {this._renderButton("STOP", () => {this._stop()} )}
+            {this._renderButton("PAUSE", () => {this._pause()} )}
+            {this._renderButton("PLAY", () => {this._play()}, this.state.playing )}
+            <Text style={exampleStyles.progressText}>{this.state.currentTime}s</Text>
+          </View>
+        </View>
+
+      </ScrollView>
+    )
   }
   _renderRow (rowData) {
     return (
       <View style={styles.row}>
-          <Image
-            source={{ uri: rowData.image }}
-            style={styles.imageStyle}
-            />
+        <Image
+          source={{ uri: rowData.image }}
+          style={styles.imageStyle}
+          />
         <Text style={styles.boldLabel}>{rowData.title}</Text>
-      </View>
-    )
-  }
-  render () {
-    return (
-      <View style={styles.container}>
-
-        <ListView
-          contentContainerStyle={styles.listContent}
-          dataSource={this.state.dataSource}
-          renderRow={this._renderRow} />
-
-        <View style={styles.container}>
-          <TouchableOpacity onPress={this._startRecognizing}>
-            <Image
-              style={styles.button}
-              source={Images.button}
-              />
-          </TouchableOpacity>
-        </View>
-
       </View>
     )
   }
@@ -179,3 +259,35 @@ const mapDispatchToProps = (dispatch) => {
 export default connect(mapStateToProps, mapDispatchToProps)(CategoriesScreen)
 
 // TODO: mapStateToProps - Wingman - Messages - UserCommand
+var exampleStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#2b608a",
+  },
+  controls: {
+    marginTop: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
+  progressText: {
+    paddingTop: 50,
+    fontSize: 50,
+    color: "#fff"
+  },
+  button: {
+    padding: 20,
+    backgroundColor: "#fff"
+  },
+  disabledButtonText: {
+    color: '#eee'
+  },
+  buttonText: {
+    fontSize: 20,
+    color: "#fff"
+  },
+  activeButtonText: {
+    fontSize: 20,
+    color: "#B81F00"
+  }
+})
