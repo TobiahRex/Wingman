@@ -9,21 +9,19 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  ToastAndroid,
   TouchableOpacity,
   TouchableHighlight,
-  View,
+  View
 } from 'react-native'
-import { Images } from '../Themes'
+import { Images, Metrics, Colors } from '../Themes'
 import { Actions as NavigationActions } from 'react-native-router-flux'
 import styles from './Styles/CategoriesScreenStyle'
 import Actions from '../Actions/Creators'
 import { firebase, firebaseDB } from '../Config/FirebaseConfig'
 // For empty lists
 import AlertMessage from '../Components/AlertMessageComponent'
-
-console.log('NativeModules: ', NativeModules);
-import { AudioRecorder, AudioUtils } from 'react-native-audio'
+const { RNRecordAudio, AudioPlayerManager } = NativeModules
+console.dir(AudioPlayerManager)
 const firebaseAuth = firebase.auth()
 
 class CategoriesScreen extends React.Component {
@@ -79,99 +77,42 @@ class CategoriesScreen extends React.Component {
       finished: false
     }
   }
-  prepareRecordingPath (audioPath) {
-    AudioRecorder.prepareRecordingAtPath(audioPath, {
-      SampleRate: 22050,
-      Channels: 1,
-      AudioQuality: 'Low',
-      AudioEncoding: 'AAC'
-    })
-  }
-  componentDidMount () {
-    let audioPath = AudioUtils.DocumentDirectoryPath + '/test.aac'
-    this.prepareRecordingPath(audioPath);
-    AudioRecorder.onProgress = (data) => {
-      this.setState({ currentTime: Math.floor(data.currentTime) })
-    }
-    AudioRecorder.onFinish = (data) => {
-      this.setState({ finished: data.finished })
-      console.log('Finished Recording: ', data.finished);
-    }
-  }
-  _renderButton (title, onPress, active) {
-    let style = (active) ? styles.activeButtonText : styles.buttonText
-    return (
-      <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={style}>
-          {title}
-        </Text>
-      </TouchableOpacity>
-    )
-  }
-  _pause () {
-    if (this.state.recording) {
-      AudioREcorder.pauseRecording()
-      this.setState({ stoppedRecording: true, recording: false })
-    }
-    else if (this.state.playing) {
-      AudioRecorder.pausePlaying()
-      this.setState({ playing: false, stoppedPlaying: true })
-    }
-  }
-  _stop () {
-    if (this.state.recording) {
-      AudioRecorder.stopRecording()
-      this.setState({ stoppedRecording: true, recording: false })
-    } else if (this.state.playing) {
-      AudioRecorder.stopPlaying()
-      this.setState({ playing: false, stoppedPlaying: true })
-    }
-  }
-  _record () {
-    if (this.state.stoppedRecording) {
-      let audioPath = AudioUtils.DocumentDirectoryPath + '/test.aac'
-      this.prepareRecordingPath(audioPath)
-    }
-    AudioRecorder.startRecording()
-    this.setState({ recording: true, playing: false })
-  }
-  _play () {
-    if (this.state.recording) {
-      this._stop()
-      this.setState({ recording: false })
-    }
-    AudioRecorder.playRecording()
-    this.setState({ playing: true })
-  }
-  // <ListView
-  //   contentContainerStyle={styles.listContent}
-  //   dataSource={this.state.dataSource}
-  //   renderRow={this._renderRow} />
-  //
-  // <View style={styles.container}>
-  //   <TouchableOpacity onPress={this._startRecognizing}>
-  //     <Image
-  //       style={styles.button}
-  //       source={Images.button}
-  //       />
-  //   </TouchableOpacity>
-  // </View>
+  _startRecording = () => {
+    console.log('in start')
+    RNRecordAudio.startRecord('test.m4a',
+    (results) => console.log('JS Errors: ' + results['errMsg']),
+    (results) => console.log('JS Success: ' + results['sucessMsg'])
+  ) }
+  _stopRecording = () => {
+    console.log('in stop')
+    RNRecordAudio.stopRecord('test.m4a',
+    (results) => console.log('JS Errors: ' + results['errMsg']),
+    (results) => console.log('JS Success: ' + results['successMsg'])
+  ) }
   render () {
     return (
-      <ScrollView >
+      <ScrollView>
+        <ListView
+          contentContainerStyle={styles.listContent}
+          dataSource={this.state.dataSource}
+          renderRow={this._renderRow} />
 
-
-
-        <View style={exampleStyles.container}>
-          <View style={exampleStyles.controls}>
-            {this._renderButton("RECORD", () => {this._record()}, this.state.recording )}
-            {this._renderButton("STOP", () => {this._stop()} )}
-            {this._renderButton("PAUSE", () => {this._pause()} )}
-            {this._renderButton("PLAY", () => {this._play()}, this.state.playing )}
-            <Text style={exampleStyles.progressText}>{this.state.currentTime}s</Text>
-          </View>
+        <View style={styles.container}>
+          <TouchableOpacity onPress={this._startRecording}>
+            <Image
+              style={styles.button}
+              source={Images.button}
+              />
+          </TouchableOpacity>
         </View>
 
+        <View style={exampleStyles.container}>
+          <TouchableHighlight onPress={this._stopRecording}>
+            <Text style={exampleStyles.instructions}>
+              Press to Stop Recording
+            </Text>
+          </TouchableHighlight>
+        </View>
       </ScrollView>
     )
   }
@@ -262,37 +203,18 @@ export default connect(mapStateToProps, mapDispatchToProps)(CategoriesScreen)
 var exampleStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#2b608a",
-  },
-  controls: {
-    marginTop: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    flex: 1,
+    backgroundColor: '#F5FCFF'
   },
-  progressText: {
-    paddingTop: 50,
-    fontSize: 50,
-    color: "#fff"
-  },
-  button: {
-    padding: 20,
-    height: 45,
-    borderRadius: 5,
-    marginHorizontal: Metrics.section,
-    marginVertical: Metrics.baseMargin,
-    backgroundColor: Colors.fire,
-    justifyContent: 'center'
-  },
-  disabledButtonText: {
-    color: '#eee'
-  },
-  buttonText: {
+  welcome: {
     fontSize: 20,
-    color: "#fff"
+    textAlign: 'center',
+    margin: 10
   },
-  activeButtonText: {
-    fontSize: 20,
-    color: "#B81F00"
+  instructions: {
+    textAlign: 'center',
+    color: '#333333',
+    marginBottom: 5
   }
 })
