@@ -277,7 +277,12 @@ var exampleStyles = StyleSheet.create({
   },
   button: {
     padding: 20,
-    backgroundColor: "#fff"
+    height: 45,
+    borderRadius: 5,
+    marginHorizontal: Metrics.section,
+    marginVertical: Metrics.baseMargin,
+    backgroundColor: Colors.fire,
+    justifyContent: 'center'
   },
   disabledButtonText: {
     color: '#eee'
