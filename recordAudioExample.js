@@ -11,9 +11,9 @@ import {
   TouchableHighlight,
   View
  } from 'react-native'
-const { RNRecordAudio } = NativeModules
+const { RNRecordAudio, AudioPlayerManager } = NativeModules
 console.log('NativeModules: ', NativeModules);
-
+console.log('AudioPlayerManager: ', AudioPlayerManager)
 class testComp extends React.Component {
   componentDidMount () {
     // no actions in mount

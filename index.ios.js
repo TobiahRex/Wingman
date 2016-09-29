@@ -14,4 +14,5 @@ class RNBase extends React.Component {
 }
 
 AppRegistry.registerComponent('WINGMAN', () => RNBase)
+
 export const dispatch = store.dispatch

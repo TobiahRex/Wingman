@@ -24,4 +24,4 @@ const updateReducers = (store) => {
   }).catch(() => AsyncStorage.setItem('reducerVersion', reducerVersion))
 }
 
-export default {updateReducers}
+export default { updateReducers }

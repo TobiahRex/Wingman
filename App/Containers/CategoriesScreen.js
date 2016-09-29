@@ -20,8 +20,8 @@ import Actions from '../Actions/Creators'
 import { firebase, firebaseDB } from '../Config/FirebaseConfig'
 // For empty lists
 import AlertMessage from '../Components/AlertMessageComponent'
-const { RNRecordAudio, AudioPlayerManager } = NativeModules
-console.dir(AudioPlayerManager)
+const { RNRecordAudio, AudioPlayerManager, AudioRecorderManager } = NativeModules
+console.dir(AudioRecorderManager)
 const firebaseAuth = firebase.auth()
 
 class CategoriesScreen extends React.Component {
