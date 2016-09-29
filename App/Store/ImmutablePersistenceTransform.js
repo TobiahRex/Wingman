@@ -9,27 +9,39 @@ const convertToJs = (state) => state.asMutable({deep: true})
 
 // optionally convert this object into a JS object if it is Immutable
 const fromImmutable = R.when(isImmutable, convertToJs)
+/*
+pred(x) ~ pred(state) ~ isImmutable(raw) ~ is the raw state immuable ?
+TRUE = convertToJs(raw)
+FALSE = raw state.
+*/
 
 // convert this JS object into an Immutable object
 const toImmutable = (raw) => Immutable(raw)
 
 // the transform interface that redux-persist is expecting
 export default {
-  out: (state) => {
-    // console.log({ retrieving: state })
-    // --- HACKZORZ ---
-    // Attach a empty-ass function to the object called `mergeDeep`.
-    // This tricks redux-persist into just placing our Immutable object into the state tree
-    // instead of trying to convert it to a POJO
-    // https://github.com/rt2zz/redux-persist/blob/master/src/autoRehydrate.js#L55
-    //
-    // Another equal terrifying option would be to try to pass their other check
-    // which is lodash isPlainObject.
-    // --- END HACKZORZ ---
+  out(state) => {
+    /*
+    console.log({ retrieving: state })
+    --- HACKZORZ ---
+    Attach a empty-ass function to the object called `mergeDeep`.
+    This tricks redux-persist into just placing our Immutable object into the state tree
+    instead of trying to convert it to a POJO
+    https://github.com/rt2zz/redux-persist/blob/master/src/autoRehydrate.js#L55
+
+    Another equal terrifying option would be to try to pass their other check
+    which in lodash is isPlainObject.
+    --- END HACKZORZ ---
+    */
+
+    /*
+      R.identity is a function that does nothing but returns the parameter supplied to it -
+      in this case returns a deep copy of state.
+    */
     state.mergeDeep = R.identity
     return toImmutable(state)
   },
-  in: (raw) => {
+  in(raw) => {
     // console.log({ storing: raw })
     return fromImmutable(raw)
   }
